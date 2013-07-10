@@ -1,4 +1,4 @@
-MONITUMBLE
+#monitumble
 
 The overall goal of this project is to change the configured orientation of a screen
 (that is, the orientation that the computer uses) to match that of the physical monitor
@@ -6,6 +6,15 @@ when the monitor is rotated.
 I plan to do this by sticking a couple of accelerometers to the backs of my monitors,
 hooking them up to a control module, and hooking that in to the computer to talk to
 some software that does the screen orientation change.
+
+This repository will be mostly prototyping for a while.
+
+##Project references
+
+This project makes use of the Arduino Makefile project (https://github.com/sudar/Arduino-Makefile).
+
+
+#Hardware info
 
 Current protyping hardware:
     2x Freescale MMA7455L accelerometer modules
@@ -19,10 +28,8 @@ Eventual hardware will include
     1x Dual monitor stand (http://www.amazon.com/gp/product/B002R9HQLI/)
     1x Desktop computer, Windows Server 2012 with various hosted VMs including Windows 8.1 and Linux
 
-====================
-
-Diecimila special pinouts
-Capabilities:
+##Diecimila special pinouts
+###Capabilities:
 SER             : Serial communication, should be reserved for such to talk with computer.
 INT             : Interrupt trigger (low, rising, falling, or change). See http://arduino.cc/en/Reference/AttachInterrupt
 PWM             : 8-bit PWM output via http://arduino.cc/en/Reference/AnalogWrite
@@ -30,7 +37,7 @@ SPI             : SPI communication (SPI software library required).
 LED             : Built-in LED.
 I2C             : I2C communication.
 
-Diecimila pinouts:
+###Capabilities by pin:
 00 : SER (RX)
 01 : SER (TX)
 02 : INT (0)
@@ -46,9 +53,7 @@ Diecimila pinouts:
 12 : SPI (MISO)
 13 : SPI (SCK),  LED
 
-====================
-
-MMA7455L Pins and information
+##MMA7455L Pins and information
 
 "Low voltage operation": 2.4V - 3.6V, 2.8V typ.
     Including supply and signal
@@ -59,19 +64,7 @@ MMA7455L Pins and information
     Not so simple; those pullup resistors introduce additional factors.
     Should be safe to run other side at 3.3V.
 
-====================
-
-Hardware configuration
-CS  --- 3.3V    [ to enable I2C communication ]
-SCL <-> SCL
-SDA <-> SDA
-GND --- GND
-VCC --- 3.3V
-INT1<-> IO2     [ sensor 0 ]
-INT1<-> IO3     [ sensor 1 ]
-====================
-Registers:
-
+###Registers:
 $01 XOUTL
 $01 XOUTH
 $02 YOUTL
@@ -148,4 +141,15 @@ $1C PW      Pulse duration value
 $1D LT      Latency time value
 $1E TW      Time window for 2nd pulse value
 $1F         (Reserved)
+
+
+##System hardware setup
+CS  --- 3.3V    [ to enable I2C communication ]
+SCL <-> SCL
+SDA <-> SDA
+GND --- GND
+VCC --- 3.3V
+INT1<-> IO2     [ sensor 0 ]
+INT1<-> IO3     [ sensor 1 ]
+====================
 
