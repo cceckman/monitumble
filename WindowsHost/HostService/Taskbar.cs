@@ -1,0 +1,188 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Drawing;
+using System.Runtime.InteropServices;
+
+// Due credit to winSharp93 for this:
+// http://winsharp93.wordpress.com/2009/06/29/find-out-size-and-position-of-the-taskbar/
+
+namespace com.cceckman.monitumble
+{
+    public enum TaskbarPosition
+    {
+        Unknown = -1,
+        Left,
+        Top,
+        Right,
+        Bottom,
+    }
+
+    public sealed class Taskbar
+    {
+        private const string ClassName = "Shell_TrayWnd";
+
+        private Rectangle bounds;
+        public Rectangle Bounds
+        {
+            get { return bounds; }
+            private set { this.bounds = value; }
+        }
+        private TaskbarPosition position;
+        public TaskbarPosition Position
+        {
+            get { return position; }
+            set
+            {
+                IntPtr taskbarHandle = User32.FindWindow(Taskbar.ClassName, null);
+
+                APPBARDATA data = new APPBARDATA();
+                data.cbSize = (uint)Marshal.SizeOf(typeof(APPBARDATA));
+                data.hWnd = taskbarHandle;
+                IntPtr result = Shell32.SHAppBarMessage(ABM.GetTaskbarPos, ref data);
+                if (result == IntPtr.Zero)
+                    throw new InvalidOperationException();
+
+                this.position = (TaskbarPosition)data.uEdge;
+                this.bounds = Rectangle.FromLTRB(data.rc.left, data.rc.top, data.rc.right, data.rc.bottom);
+
+                data.uEdge = (ABE)value;
+                // Basic scenario: LTR
+                if (this.position == TaskbarPosition.Left && value == TaskbarPosition.Right)
+                {
+                    // HACK fixed resolution
+                    data.rc.left = 1920 - this.Bounds.Right;
+                    data.rc.right = 1919;
+                    // leave top/bottom
+                }
+                
+                result = Shell32.SHAppBarMessage(ABM.QueryPos, ref data);
+                if (result == IntPtr.Zero)
+                {
+                    throw new InvalidOperationException();
+                }
+
+                result = Shell32.SHAppBarMessage(ABM.SetPos, ref data);
+
+                this.Update();
+            }
+        }
+
+        public Point Location
+        {
+            get
+            {
+                return this.Bounds.Location;
+            }
+        }
+        public Size Size
+        {
+            get
+            {
+                return this.Bounds.Size;
+            }
+        }
+
+        //Always returns false under Windows 7
+        private bool alwaysOnTop;
+        public bool AlwaysOnTop
+        {
+            get { return alwaysOnTop; }
+            private set { alwaysOnTop = value; }
+        }
+
+        private bool autoHide;
+        public bool AutoHide
+        {
+            get { return autoHide; }
+            private set { autoHide = value; }
+        }
+        public void Update()
+        {
+            IntPtr taskbarHandle = User32.FindWindow(Taskbar.ClassName, null);
+
+            APPBARDATA data = new APPBARDATA();
+            data.cbSize = (uint)Marshal.SizeOf(typeof(APPBARDATA));
+            data.hWnd = taskbarHandle;
+            IntPtr result = Shell32.SHAppBarMessage(ABM.GetTaskbarPos, ref data);
+            if (result == IntPtr.Zero)
+                throw new InvalidOperationException();
+
+            this.position = (TaskbarPosition)data.uEdge;
+            this.bounds = Rectangle.FromLTRB(data.rc.left, data.rc.top, data.rc.right, data.rc.bottom);
+
+            data.cbSize = (uint)Marshal.SizeOf(typeof(APPBARDATA));
+            result = Shell32.SHAppBarMessage(ABM.GetState, ref data);
+            int state = result.ToInt32();
+            this.alwaysOnTop = (state & ABS.AlwaysOnTop) == ABS.AlwaysOnTop;
+            this.autoHide = (state & ABS.Autohide) == ABS.Autohide;
+        }
+        public Taskbar()
+        {
+            this.Update();
+        }
+    }
+
+    public enum ABM : uint
+    {
+        New = 0x00000000,
+        Remove = 0x00000001,
+        QueryPos = 0x00000002,
+        SetPos = 0x00000003,
+        GetState = 0x00000004,
+        GetTaskbarPos = 0x00000005,
+        Activate = 0x00000006,
+        GetAutoHideBar = 0x00000007,
+        SetAutoHideBar = 0x00000008,
+        WindowPosChanged = 0x00000009,
+        SetState = 0x0000000A,
+    }
+
+    public enum ABE : uint
+    {
+        Left = 0,
+        Top = 1,
+        Right = 2,
+        Bottom = 3
+    }
+
+    public static class ABS
+    {
+        public const int Autohide = 0x0000001;
+        public const int AlwaysOnTop = 0x0000002;
+    }
+
+    public static class Shell32
+    {
+        [DllImport("shell32.dll", SetLastError = true)]
+        public static extern IntPtr SHAppBarMessage(ABM dwMessage, [In] ref APPBARDATA pData);
+    }
+
+    public static class User32
+    {
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct APPBARDATA
+    {
+        public uint cbSize;
+        public IntPtr hWnd;
+        public uint uCallbackMessage;
+        public ABE uEdge;
+        public RECT rc;
+        public int lParam;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct RECT
+    {
+        public int left;
+        public int top;
+        public int right;
+        public int bottom;
+    }
+}
