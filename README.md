@@ -13,6 +13,9 @@ This repository will be mostly prototyping for a while.
 
 This project makes use of the Arduino Makefile project (https://github.com/sudar/Arduino-Makefile).
 
+This project makes use of the Arduino I2C library by Waynes Truchsess. The library's code in 
+its entirety can be found in the I2C directory; information on licensing can be found in I2C.h
+and I2C.cpp.
 
 #Hardware info
 
@@ -70,7 +73,7 @@ Eventual hardware will include
 
 ###Registers:
     
-    $01 XOUTL
+    $00 XOUTL
     $01 XOUTH
     $02 YOUTL
     $03 YOUTH
